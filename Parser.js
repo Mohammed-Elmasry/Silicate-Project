@@ -24,7 +24,11 @@ function getCondArgs(tokens = []) {
 function getBody(tokens = []) {
     let start = tokens.indexOf("{");
     let end = getClosingPair(tokens, start);
-    return tokens.slice(start, end);
+    return tokens.slice(start + 1, end);
+}
+
+function getFuncName(tokens = [], index = 0) {
+    return tokens[index + 1];
 }
 
 function handleBrace(array = [], index = 0) {
@@ -39,7 +43,7 @@ function handleBrace(array = [], index = 0) {
 
 function parser(tokens = []) {
     let tree = [];
-    let braces = ["("];
+    let braces = ["(", "{", ")", "}"];
     let operators = ["+", "-", "*", "/", "%", "<", ">", "==", "<=", ">="];
 
     for (let i = 0; i < tokens.length; ++i) {
@@ -63,7 +67,13 @@ function parser(tokens = []) {
                 expr["body"] = parser(getBody(tokens));
                 tree.push(expr);
             } else if (token === "func") {
-
+                expr["type"] = "apply";
+                expr["operator"] = token;
+                expr["name"] = getFuncName(tokens, i);
+                expr["args"] = parser(getArgs(tokens));
+                expr["body"] = parser(getBody(tokens));
+                tree.push(expr);
+                i++;
             }
         } else {
             // literal parsing

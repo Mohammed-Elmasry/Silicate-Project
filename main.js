@@ -6,12 +6,12 @@ let {parser, getArgs, isKeyword, getBody} = require("./Parser");
 
 
 let prog = `
-    while(x > 2){
+    if(x + 2){
         print("big")
     }
 `;
 
 let tokens = tokenizer(prog);
 let ast = parser(tokens);
-console.log(ast[0]["body"]);
+console.log(ast[0]["args"][[0]]);
 
