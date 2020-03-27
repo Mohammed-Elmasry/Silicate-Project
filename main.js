@@ -1,17 +1,17 @@
 // preprocessing
-let {tokenizer, getClosingPair, setCharBetweenSpace} = require("./preprocessor");
+let {tokenizer} = require("./preprocessor");
 
 // parsing
-let {parser, getArgs, isKeyword, getBody} = require("./Parser");
+let {parser} = require("./Parser");
 
 
 let prog = `
-    if(x + 2){
-        print("big")
+    func multiplyBy2(num){
+        print(num * 2)
     }
 `;
 
 let tokens = tokenizer(prog);
 let ast = parser(tokens);
-console.log(ast[0]["args"][[0]]);
+console.log(ast[0]["body"][0]);
 
