@@ -1,18 +1,18 @@
 let {getClosingPair} = require("./preprocessor");
 
-function getArgs(tokens = []) {
-    let index = tokens.indexOf("(");
-    let closingPair = getClosingPair(tokens, index);
-    args = tokens.slice(index + 1, closingPair).filter(function (e) {
+function getArgs(tokens = [], index = 0) {
+    let i = tokens.indexOf("(", index);
+    let closingPair = getClosingPair(tokens, i);
+    args = tokens.slice(i + 1, closingPair).filter(function (e) {
         return e !== ",";
     });
     return args;
 }
 
-function getCondArgs(tokens = []) {
-    let index = tokens.indexOf("(");
-    let closingPair = getClosingPair(tokens, index);
-    args = tokens.slice(index + 1, closingPair).filter(function (e) {
+function getCondArgs(tokens = [], index = 0) {
+    let i = tokens.indexOf("(", index);
+    let closingPair = getClosingPair(tokens, i);
+    args = tokens.slice(i + 1, closingPair).filter(function (e) {
         return e !== ",";
     });
     temp = args[0];
@@ -21,8 +21,8 @@ function getCondArgs(tokens = []) {
     return args;
 }
 
-function getBody(tokens = []) {
-    let start = tokens.indexOf("{");
+function getBody(tokens = [], index = 0) {
+    let start = tokens.indexOf("{", index);
     let end = getClosingPair(tokens, start);
     return tokens.slice(start + 1, end);
 }
@@ -48,30 +48,35 @@ function parser(tokens = []) {
 
     for (let i = 0; i < tokens.length; ++i) {
 
-        if (braces.includes(tokens[i])) {
-            i = handleBrace(tokens, i);
-        }
 
         let token = tokens[i];
+        if (token === undefined) {
+            return tree;
+        }
         let expr = Object.create(null);
         if (isKeyword(token)) {
             if (token === "def") {
                 expr["type"] = "apply";
                 expr["operator"] = "def";
-                expr["args"] = parser(getArgs(tokens));
+                expr["args"] = parser(getArgs(tokens, i));
                 tree.push(expr);
             } else if (token === "if" || token === "while") {
                 expr["type"] = "apply";
                 expr["operator"] = token;
-                expr["args"] = parser(getCondArgs(tokens));
-                expr["body"] = parser(getBody(tokens));
+                expr["args"] = parser(getCondArgs(tokens, i));
+                expr["body"] = parser(getBody(tokens, i));
+                tree.push(expr);
+            } else if (token === "else") {
+                expr["type"] = "apply";
+                expr["operator"] = token;
+                expr["body"] = parser(getBody(tokens, i));
                 tree.push(expr);
             } else if (token === "func") {
                 expr["type"] = "apply";
                 expr["operator"] = token;
                 expr["name"] = getFuncName(tokens, i);
-                expr["args"] = parser(getArgs(tokens));
-                expr["body"] = parser(getBody(tokens));
+                expr["args"] = parser(getArgs(tokens, i));
+                expr["body"] = parser(getBody(tokens, i));
                 tree.push(expr);
                 i++;
             }
@@ -88,13 +93,23 @@ function parser(tokens = []) {
                     if (tokens[i + 1] === "(") { // a function call
                         expr["type"] = "apply";
                         expr["operator"] = match[1];
-                        expr["args"] = parser(getArgs(tokens));
+                        var args = (getArgs(tokens, i));
+                        let intersection = operators.filter(arg => {
+                            return args.includes(arg);
+                        });
+                        if (intersection.length != 0) {
+                            expr["args"] = parser(getCondArgs(tokens));
+                        } else {
+                            expr["args"] = parser(args);
+                        }
                         tree.push(expr);
                     } else { // a variable
                         expr["type"] = "identifier";
                         expr["name"] = match[1];
                         tree.push(expr);
                     }
+                } else if (braces.includes(tokens[i])) {
+                    i = handleBrace(tokens, i);
                 } else { // operator
                     if (operators.includes(token)) {
                         expr["type"] = "apply";
@@ -111,7 +126,7 @@ function parser(tokens = []) {
 }
 
 function isKeyword(keyword = "") {
-    let keywords = ["func", "def", "while", "if"];
+    let keywords = ["func", "def", "while", "if", "else"];
     return keywords.includes(keyword);
 }
 

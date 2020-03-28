@@ -6,12 +6,14 @@ let {parser} = require("./Parser");
 
 
 let prog = `
-    func multiplyBy2(num){
-        print(num * 2)
+    if(x > 2){
+        print("bigger")
+    } else {
+        print("small")
     }
 `;
 
 let tokens = tokenizer(prog);
 let ast = parser(tokens);
-console.log(ast[0]["body"][0]);
+console.log(ast[1]);
 
