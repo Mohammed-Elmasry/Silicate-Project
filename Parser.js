@@ -88,7 +88,7 @@ function parser(tokens = []) {
                     if (tokens[i + 1] === "(") { // a function call
                         expr["type"] = "apply";
                         expr["operator"] = match[1];
-                        expr["args"] = getArgs(tokens);
+                        expr["args"] = parser(getArgs(tokens));
                         tree.push(expr);
                     } else { // a variable
                         expr["type"] = "identifier";
